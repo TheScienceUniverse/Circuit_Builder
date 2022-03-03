@@ -1,0 +1,75 @@
+* {
+	padding: 0;
+	margin: 0;
+	text-decoration: none;
+	list-style: none;
+	box-sizing: border-box;
+}
+
+#circuit-container {
+	width: 200px;
+	height: fit-content;
+}
+
+#circuit-toolbox {
+	width: 220px;
+	height: 700px;
+}
+
+#component-search-box {
+	width: 100%;
+	height: 30px;
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	position: relative;
+	font-size: 20px;
+	line-height: 100%;
+	vertical-align: middle;
+}
+
+#component-search-box textarea {
+	width: 190px;
+	height: 30px;
+	resize: none;
+	font-size: 12pt;
+	line-height: 30px;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+#component-search-box button {
+	width: 30px;
+	height: 30px;
+	position: absolute;
+	right: 0;
+}
+
+#component-search-box button img {
+	width: 100%;
+	height: 100%;
+}
+
+#component-tool-list {
+	width: 100%;
+	height: 680px;
+	background-color: lightgray;
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	text-align: center;
+	overflow: scroll;
+}
+
+.component-tool {
+	width: 100%;
+	height: 80px;
+	background-color: lightgray;
+	border-bottom: 1px solid black;
+	border-right: 1px solid black;
+	text-align: center;
+}
+
+.component-tool img {
+	display: inline-block;
+	width: 80px;
+	height: 80px;
+}
