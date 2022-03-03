@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+
+<svg xmlns="http://www.w3.org/2000/svg"
+	width="100" height="100"
+	viewBox="0 0 100 100"
+>
+	<circle cx="50" cy="50" r="30" stroke="black" stroke-width="2" fill="white" />
+	<path d="M 30,50 Q 40,30 50,50 T 70,50" stroke="black" stroke-width="2" fill="none"/>
+	<line x1="0" y1="50" x2="20" y2="50" stroke="black" stroke-width="2"/>
+	<line x1="80" y1="50" x2="100" y2="50" stroke="black" stroke-width="2"/>
+</svg>
