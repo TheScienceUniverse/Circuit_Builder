@@ -5,16 +5,15 @@
 	width="170" height="100"
 	viewBox="0 0 170 100"
 >
+	<circle class="connector" cx="5" cy="50" r="4" stroke="black" stroke-width="1.5" fill="white"/>
+	<line x1="8.5" y1="50" x2="26.5" y2="50" stroke="black" stroke-width="3"/>
 	<path d="M 25,50 A 15 15 0 0 1 70 50" fill="none" stroke="black" stroke-width="3"/>
 	<path d="M 50,50 A 15 15 0 0 1 95 50" fill="none" stroke="black" stroke-width="3"/>
 	<path d="M 75,50 A 15 15 0 0 1 120 50" fill="none" stroke="black" stroke-width="3"/>
 	<path d="M 100,50 A 15 15 0 0 1 145 50" fill="none" stroke="black" stroke-width="3"/>
-
 	<path d="M 70,50 A 10 15 0 0 1 50 50" fill="none" stroke="black" stroke-width="3"/>
 	<path d="M 95,50 A 10 15 0 0 1 75 50" fill="none" stroke="black" stroke-width="3"/>
 	<path d="M 120,50 A 10 15 0 0 1 100 50" fill="none" stroke="black" stroke-width="3"/>
-	
-
-	<line x1="0" y1="50" x2="26.5" y2="50" stroke="black" stroke-width="3"/>
-	<line x1="143.5" y1="50" x2="170" y2="50" stroke="black" stroke-width="3"/>
+	<line x1="143.5" y1="50" x2="161.5" y2="50" stroke="black" stroke-width="3"/>
+	<circle class="connector" cx="165" cy="50" r="4" stroke="black" stroke-width="1.5" fill="white"/>
 </svg>
