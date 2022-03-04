@@ -6,40 +6,44 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Circuit Diagram</title>
 	<link rel="stylesheet" type="text/css" href="./style.css"/>
-	<script src="../script.js"></script>
 	<script src="./script.js"></script>
 </head>
-<body>
+<body onload="init()">
 	<main>
 		<div id="circuit-container">
 			<div id="circuit-toolbox">
 				<div id="component-search-box">
 					<textarea rows="1"></textarea>
 					<button>
-						<img src="../../media/svg/search.svg" alt="Search for Components">
+						<img src="./media/search.svg" alt="Search for Components">
 					</button>
 				</div>
 				<div id="component-tool-list">
-					<div class="component-tool"><img src="./media/dc_power.svg" alt="dc_power"></div>
-					<div class="component-tool"><img src="./media/ac_power.svg" alt="ac_power"></div>
-					<div class="component-tool"><img src="./media/ground.svg" alt="ground"></div>
-					<div class="component-tool"><img src="./media/resistor.svg" alt="resistor"></div>
-					<div class="component-tool"><img src="./media/capacitor.svg" alt="capacitor"></div>
-					<div class="component-tool"><img src="./media/inductor.svg" alt="inductor"></div>
-					<div class="component-tool"><img src="./media/switch.svg" alt="switch"></div>
-					<div class="component-tool"><img src="./media/fuse.svg" alt="fuse"></div>
-
-					<div class="component-tool"><img src="./media/binary_buffer_gate.svg" alt="binary_buffer_gate"></div>
-					<div class="component-tool"><img src="./media/binary_not_gate.svg" alt="binary_not_gate"></div>
-					<div class="component-tool"><img src="./media/binary_or_gate.svg" alt="binary_or_gate"></div>
-					<div class="component-tool"><img src="./media/binary_nor_gate.svg" alt="binary_nor_gate"></div>
-					<div class="component-tool"><img src="./media/binary_and_gate.svg" alt="binary_and_gate"></div>
-					<div class="component-tool"><img src="./media/binary_nand_gate.svg" alt="binary_nand_gate"></div>
-					<div class="component-tool"><img src="./media/binary_xor_gate.svg" alt="binary_xor_gate"></div>
-					<div class="component-tool"><img src="./media/binary_xnor_gate.svg" alt="binary_xnor_gate"></div>
+					<div class="component-box"><img class="component-tool" src="./media/dc_power.svg" alt="dc_power" title="DC Power"></div>
+					<div class="component-box"><img class="component-tool" src="./media/ac_power.svg" alt="ac_power" title="AC Power"></div>
+					<div class="component-box"><img class="component-tool" src="./media/ground.svg" alt="ground" title="Ground / Earth"></div>
+					<div class="component-box"><img class="component-tool" src="./media/resistor.svg" alt="resistor" title="Resistor"></div>
+					<div class="component-box"><img class="component-tool" src="./media/capacitor.svg" alt="capacitor" title="Capacitor"></div>
+					<div class="component-box"><img class="component-tool" src="./media/inductor.svg" alt="inductor" title="Inductor"></div>
+					<div class="component-box"><img class="component-tool" src="./media/switch.svg" alt="switch" title="Switch"></div>
+					<div class="component-box"><img class="component-tool" src="./media/fuse.svg" alt="fuse" title="Fuse"></div>
+					<div class="component-box"><img class="component-tool" src="./media/binary_buffer_gate.svg" alt="binary_buffer_gate" title="Binary Buffer Gate / PN Diode"></div>
+					<div class="component-box"><img class="component-tool" src="./media/binary_not_gate.svg" alt="binary_not_gate" title="Binary NOT Gate"></div>
+					<div class="component-box"><img class="component-tool" src="./media/binary_or_gate.svg" alt="binary_or_gate" title="Binary OR Gate"></div>
+					<div class="component-box"><img class="component-tool" src="./media/binary_nor_gate.svg" alt="binary_nor_gate" title="Binary NOR (Not OR) Gate"></div>
+					<div class="component-box"><img class="component-tool" src="./media/binary_and_gate.svg" alt="binary_and_gate" title="Binary AND Gate"></div>
+					<div class="component-box"><img class="component-tool" src="./media/binary_nand_gate.svg" alt="binary_nand_gate" title="Binary NAND (Not AND) Gate"></div>
+					<div class="component-box"><img class="component-tool" src="./media/binary_xor_gate.svg" alt="binary_xor_gate" title="Binary XOR (eXclusive OR) Gate"></div>
+					<div class="component-box"><img class="component-tool" src="./media/binary_xnor_gate.svg" alt="binary_xnor_gate" title="Binary XNOR (eXclusive Not OR) Gate"></div>
 				</div>
 			</div>
 			<div id="circuit-window"></div>
+			<div id="circuit-overlay">
+				<p class="overlay_key">View coordinates:</p>
+				<p class="overlay_value"></p>
+				<p class="overlay_key">Map coordinates:</p>
+				<p class="overlay_value"></p>
+			</div>
 		</div>
 	</main>
 </body>
