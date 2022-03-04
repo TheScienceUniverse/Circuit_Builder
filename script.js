@@ -3,6 +3,7 @@ const media_directory = '..';
 var mouse_x = null, mouse_y = null;
 var mouse_dx = null, mouse_dy = null;
 var selected_component_tool = null;
+var selected_component = null;
 var component_position = null;
 
 class Component {
@@ -32,7 +33,7 @@ function set_circuit_window_listeners () {
 			if (event .target .classList [0] == "component-tool") {
 				selected_component_tool = event .target;
 			}
-			
+
 			mouse_dx = event .offsetX;
 			mouse_dy = event .offsetY;
 		});
@@ -61,21 +62,20 @@ function set_circuit_window_listeners () {
 	
 			var new_component = document .createElementNS ("http://www.w3.org/2000/svg", "svg");
 			new_component .setAttributeNS ("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
-			
 			new_component .setAttribute ("viewBox", "0 0 100 100");
-			
+
 			if (selected_component_tool .getAttribute ("alt") == "inductor") {
 				new_component .setAttribute ("viewBox", "0 0 170 100");
 			}
 			
 			new_component .setAttribute ("class", "component");
+			new_component .setAttribute ("draggable", "true");
 			new_component .innerHTML = get_component_svg_data (selected_component_tool .getAttribute ("alt"));
 			new_component .style .left = (mouse_x - 223 - mouse_dx) + "px";
 			new_component .style .top = (mouse_y - mouse_dy - 3) + "px";
-
+			
+			set_componet_events (new_component, [mouse_x - 223 - mouse_dx, mouse_y - mouse_dy]);
 			event .target .appendChild (new_component);
-	
-			set_componet_events (new_component);
 			selected_component_tool = null;
 		}
 	});
@@ -97,75 +97,48 @@ function set_overlay_events () {
 	});
 }
 
-function set_componet_events (component) {
-	let dragging = false;
+function set_componet_events (component, initial_position) {
+	var dragging = false;
+	var initial_drag_position;
+	let circuit_window = document .getElementById ("circuit-window");
+	let current_position = initial_position;
 
 	component .addEventListener ("mousedown", (event) => {
-		//event .preventDefault ();
-		position = [event .clientX, event .offsetX, event .clientY, event .offsetY];
-		//console .log (position);
+		initial_drag_position = [event .clientX, event .clientY];
+
 		dragging = true;
-		console .log (dragging);
+		mouse_x = event .clientX;
+		mouse_y = event .clientY;
 	});
 
-	component .addEventListener ("mousemove", (event) => {
-		position = [event .clientX, event .offsetX, event .clientY, event .offsetY];
-		//console .log (event .clientX, event .clientY);
-		console .log (dragging);
-	});
+	circuit_window .addEventListener ("mousemove", (event) => {
+		mouse_x = event .clientX;
+		mouse_y = event .clientY;
 
-	component .addEventListener ("mouseup", (event) => {
-		//event .preventDefault ();
-		position = [event .clientX, event .offsetX, event .clientY, event .offsetY];
-		//console .log (position);
-		dragging = false;
-		//console .log (event .clientX, event .clientY);
-		console .log (dragging);
+		if (dragging) {
+			current_position = [initial_position [0] +  mouse_x - initial_drag_position [0], initial_position [1] + mouse_y - initial_drag_position [1]];
+
+			component .style .left = current_position [0] + "px";
+			component .style .top = current_position [1] + "px";
+		}
 	});
-}
-/*
-function dragElement (elmnt) {
-	var pos1, pos2;
 	
-	if (document.getElementById(elmnt.id + "header")) {
-		// if present, the header is where you move the DIV from:
-		document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
-	} else {
-		// otherwise, move the DIV from anywhere inside the DIV:
-		elmnt.onmousedown = dragMouseDown;
-	}
+	circuit_window .addEventListener ("mouseup", (event) => {
+		mouse_x = event .clientX;
+		mouse_y = event .clientY;
 
-	function dragMouseDown(e) {
-		e = e || window.event;
-		e.preventDefault();
-		// get the mouse cursor position at startup:
-		pos3 = e.clientX;
-		pos4 = e.clientY;
-		document.onmouseup = closeDragElement;
-		// call a function whenever the cursor moves:
-		document.onmousemove = elementDrag;
-	}
+		if (dragging) {
+			current_position = [initial_position [0] +  mouse_x - initial_drag_position [0], initial_position [1] + mouse_y - initial_drag_position [1]];
 
-	function elementDrag(e) {
-		e = e || window.event;
-		e.preventDefault();
-		// calculate the new cursor position:
-		pos1 = pos3 - e.clientX;
-		pos2 = pos4 - e.clientY;
-		pos3 = e.clientX;
-		pos4 = e.clientY;
-		// set the element's new position:
-		elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-		elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-	}
+			component .style .left = current_position [0] + "px";
+			component .style .top = current_position [1] + "px";
+		}
 
-	function closeDragElement() {
-		// stop moving when mouse button is released:
-		document.onmouseup = null;
-		document.onmousemove = null;
-	}
+		initial_position = current_position;
+		dragging = false;
+	});
 }
-*/
+
 function get_component_svg_data (component_name) {
 	let data = null;
 
