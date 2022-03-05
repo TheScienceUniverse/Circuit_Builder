@@ -9,7 +9,7 @@
 	<line x1="5" y1="37.5" x2="17.5" y2="37.5" stroke="black" stroke-width="2"/>
 	<circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/>
 	<line x1="5" y1="62.5" x2="17.5" y2="62.5" stroke="black" stroke-width="2"/>
-	<path d="M 17.5,25 L 47.5,25 A 25 25 0 0 1 47.5 75 L 17.5,75 Z" stroke="black" stroke-width="2" fill="white"/>
+	<path d="M 17.5,25 l 30,0 a 25,25 0 0 1 0,50 l -30,0 z" stroke="black" stroke-width="2" fill="white"/>
 	<circle cx="77.5" cy="50" r="5" stroke="black" stroke-width="2" fill="white" />
 	<line x1="82.5" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/>
 	<circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>

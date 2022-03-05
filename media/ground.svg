@@ -6,7 +6,7 @@
 	viewBox="0 0 100 100"
 >
 	<circle class="connector" cx="50" cy="3" r="2.5" stroke="black" stroke-width="1" fill="white"/>
-    <line x1="50" y1="5" x2="50" y2="50" stroke="black" stroke-width="2"/>
+	<line x1="50" y1="5" x2="50" y2="50" stroke="black" stroke-width="2"/>
 	<line x1="15" y1="50" x2="85" y2="50" stroke="black" stroke-width="2"/>
 	<line x1="25" y1="60" x2="75" y2="60" stroke="black" stroke-width="2"/>
 	<line x1="35" y1="70" x2="65" y2="70" stroke="black" stroke-width="2"/>
