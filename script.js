@@ -96,6 +96,8 @@ function set_componet_events (component, initial_position) {
 	let circuit = document .getElementById ("circuit");
 	// let current_position = initial_position;
 	let old_position = initial_position;
+	var connection = null;
+	var connections = document .getElementById ("connections");
 
 	component .addEventListener ("mousedown", (event) => {
 		mouse_x = event .clientX;
@@ -103,9 +105,21 @@ function set_componet_events (component, initial_position) {
 		// initial_drag_position = [mouse_x, mouse_y];
 		old_position = [mouse_x, mouse_y];
 
+		connection = document .createElementNS ("http://www.w3.org/2000/svg", "line");
+		connection .setAttribute ("class", "connection");
+		connection .setAttribute ("stroke", "black");
+		connection .setAttribute ("stroke-width", "1");
+
 		if (event .target .classList .contains ("connector")) {
 			connecting = true;
+			dragging = false;
+
+			connection .setAttribute ("x1", event .target .getAttribute ("cx"));
+			connection .setAttribute ("y1", event .target .getAttribute ("cy"));
+
+			connections .appendChild (connection);
 		} else {
+			connecting = false;
 			dragging = true;
 		}
 	});
@@ -113,6 +127,11 @@ function set_componet_events (component, initial_position) {
 	circuit .addEventListener ("mousemove", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
+
+		if (connecting) {
+			connection .setAttribute ("x2", "" + (mouse_x - 223));
+			connection .setAttribute ("y2", "" + (mouse_y - 2));
+		}
 
 		if (dragging) {
 			moveComponent (component, [mouse_x - old_position [0], mouse_y - old_position [1]]);
@@ -124,17 +143,27 @@ function set_componet_events (component, initial_position) {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 
+		if (connecting) {
+			if (event .target .classList .contains ("connector")) {
+				connection .setAttribute ("x2", event .target .getAttribute ("cx"));
+				connection .setAttribute ("y2", event .target .getAttribute ("cy"));
+			} else {
+				connections .removeChild (connections .lastChild);
+			}
+		}
+
 		if (dragging) {
 			moveComponent (component, [mouse_x - old_position [0], mouse_y - old_position [1]]);
 			old_position = [mouse_x, mouse_y];
 		}
 
-		initial_position = current_position;
+		//initial_position = current_position;
+		connecting = false;
 		dragging = false;
 
 		//component .style .stroke = "blue";
 		for (i = 0; i < component .children .length; i++) {
-			component .children [i] .setAttribute ("stroke", "blue");
+		//	component .children [i] .setAttribute ("stroke", "blue");
 			//console .log (component .children [i]);
 		}
 	});
