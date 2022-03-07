@@ -61,21 +61,12 @@ function set_circuit_listeners () {
 			mouse_y = event .clientY;
 	
 			var new_component = document .createElementNS ("http://www.w3.org/2000/svg", "g");
-			//new_component .setAttributeNS ("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
-			//new_component .setAttribute ("viewBox", "0 0 100 100");
-
-			//if (selected_component_tool .getAttribute ("alt") == "inductor") {
-			//	new_component .setAttribute ("viewBox", "0 0 170 100");
-		//	}
-			
 			new_component .setAttribute ("class", "component");
 			new_component .setAttribute ("draggable", "true");
 			new_component .innerHTML = get_component_svg_data (selected_component_tool .getAttribute ("alt"));
-			//new_component .left = (mouse_x - 223 - mouse_dx) + "px";
-			//new_component .top = (mouse_y - mouse_dy - 3) + "px";
-			
+
 			moveComponent (new_component, [mouse_x - 223 - mouse_dx, mouse_y - 3 - mouse_dy]);
-			//set_componet_events (new_component, [mouse_x - 223 - mouse_dx, mouse_y - mouse_dy]);
+			set_componet_events (new_component, [mouse_x - 223 - mouse_dx, mouse_y - 3 - mouse_dy]);
 			event .target .appendChild (new_component);
 			selected_component_tool = null;
 		}
@@ -100,16 +91,23 @@ function set_overlay_events () {
 
 function set_componet_events (component, initial_position) {
 	var dragging = false;
-	var initial_drag_position;
+	var connecting = false;
+	// var initial_drag_position;
 	let circuit = document .getElementById ("circuit");
-	let current_position = initial_position;
+	// let current_position = initial_position;
+	let old_position = initial_position;
 
 	component .addEventListener ("mousedown", (event) => {
-		initial_drag_position = [event .clientX, event .clientY];
-		console .log (event .target);
-		dragging = true;
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
+		// initial_drag_position = [mouse_x, mouse_y];
+		old_position = [mouse_x, mouse_y];
+
+		if (event .target .classList .contains ("connector")) {
+			connecting = true;
+		} else {
+			dragging = true;
+		}
 	});
 
 	circuit .addEventListener ("mousemove", (event) => {
@@ -117,22 +115,18 @@ function set_componet_events (component, initial_position) {
 		mouse_y = event .clientY;
 
 		if (dragging) {
-			current_position = [initial_position [0] +  mouse_x - initial_drag_position [0], initial_position [1] + mouse_y - initial_drag_position [1]];
-
-			component .style .left = current_position [0] + "px";
-			component .style .top = current_position [1] + "px";
+			moveComponent (component, [mouse_x - old_position [0], mouse_y - old_position [1]]);
+			old_position = [mouse_x, mouse_y];
 		}
 	});
-	
+
 	circuit .addEventListener ("mouseup", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 
 		if (dragging) {
-			current_position = [initial_position [0] +  mouse_x - initial_drag_position [0], initial_position [1] + mouse_y - initial_drag_position [1]];
-
-			component .style .left = current_position [0] + "px";
-			component .style .top = current_position [1] + "px";
+			moveComponent (component, [mouse_x - old_position [0], mouse_y - old_position [1]]);
+			old_position = [mouse_x, mouse_y];
 		}
 
 		initial_position = current_position;
