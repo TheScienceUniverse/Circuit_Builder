@@ -21,11 +21,11 @@ class Component {
 
 function init () {
 	set_overlay_events ();
-	set_circuit_window_listeners ();
+	set_circuit_listeners ();
 }
 
-function set_circuit_window_listeners () {
-	let circuit_window = document .getElementById ("circuit-window");
+function set_circuit_listeners () {
+	let circuit = document .getElementById ("circuit");
 	var component_tool_list = document .getElementsByClassName ("component-tool");
 
 	for (i = 0; i < component_tool_list .length; i++) {
@@ -46,35 +46,36 @@ function set_circuit_window_listeners () {
 		});
 	}
 
-	circuit_window .addEventListener ("dragover", (event) => {
+	circuit .addEventListener ("dragover", (event) => {
 		event .preventDefault ();
 
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 	});
 
-	circuit_window .addEventListener ("drop", (event) => {
+	circuit .addEventListener ("drop", (event) => {
 		event .preventDefault ();
 
 		if (selected_component_tool .classList [0] == "component-tool") {
 			mouse_x = event .clientX;
 			mouse_y = event .clientY;
 	
-			var new_component = document .createElementNS ("http://www.w3.org/2000/svg", "svg");
-			new_component .setAttributeNS ("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
-			new_component .setAttribute ("viewBox", "0 0 100 100");
+			var new_component = document .createElementNS ("http://www.w3.org/2000/svg", "g");
+			//new_component .setAttributeNS ("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+			//new_component .setAttribute ("viewBox", "0 0 100 100");
 
-			if (selected_component_tool .getAttribute ("alt") == "inductor") {
-				new_component .setAttribute ("viewBox", "0 0 170 100");
-			}
+			//if (selected_component_tool .getAttribute ("alt") == "inductor") {
+			//	new_component .setAttribute ("viewBox", "0 0 170 100");
+		//	}
 			
 			new_component .setAttribute ("class", "component");
 			new_component .setAttribute ("draggable", "true");
 			new_component .innerHTML = get_component_svg_data (selected_component_tool .getAttribute ("alt"));
-			new_component .style .left = (mouse_x - 223 - mouse_dx) + "px";
-			new_component .style .top = (mouse_y - mouse_dy - 3) + "px";
+			//new_component .left = (mouse_x - 223 - mouse_dx) + "px";
+			//new_component .top = (mouse_y - mouse_dy - 3) + "px";
 			
-			set_componet_events (new_component, [mouse_x - 223 - mouse_dx, mouse_y - mouse_dy]);
+			moveComponent (new_component, [mouse_x - 223 - mouse_dx, mouse_y - 3 - mouse_dy]);
+			//set_componet_events (new_component, [mouse_x - 223 - mouse_dx, mouse_y - mouse_dy]);
 			event .target .appendChild (new_component);
 			selected_component_tool = null;
 		}
@@ -100,7 +101,7 @@ function set_overlay_events () {
 function set_componet_events (component, initial_position) {
 	var dragging = false;
 	var initial_drag_position;
-	let circuit_window = document .getElementById ("circuit-window");
+	let circuit = document .getElementById ("circuit");
 	let current_position = initial_position;
 
 	component .addEventListener ("mousedown", (event) => {
@@ -111,7 +112,7 @@ function set_componet_events (component, initial_position) {
 		mouse_y = event .clientY;
 	});
 
-	circuit_window .addEventListener ("mousemove", (event) => {
+	circuit .addEventListener ("mousemove", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 
@@ -123,7 +124,7 @@ function set_componet_events (component, initial_position) {
 		}
 	});
 	
-	circuit_window .addEventListener ("mouseup", (event) => {
+	circuit .addEventListener ("mouseup", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 
@@ -145,6 +146,46 @@ function set_componet_events (component, initial_position) {
 	});
 }
 
+function moveComponent (component, offset) {
+	for (i = 0; i < component .children .length; i++) {
+		let c = component .children [i];
+
+		if (c .localName == "line") {
+			c .setAttribute ("x1", "" + (parseInt (c .getAttribute ("x1")) + offset [0]));
+			c .setAttribute ("y1", "" + (parseInt (c .getAttribute ("y1")) + offset [1]));
+			c .setAttribute ("x2", "" + (parseInt (c .getAttribute ("x2")) + offset [0]));
+			c .setAttribute ("y2", "" + (parseInt (c .getAttribute ("y2")) + offset [1]));
+		} else if (c .localName == "rect") {
+			c .setAttribute ("x", "" + (parseInt (c .getAttribute ("x")) + offset [0]));
+			c .setAttribute ("y", "" + (parseInt (c .getAttribute ("y")) + offset [1]));
+		} else if (c .localName == "circle") {
+			c .setAttribute ("cx", "" + (parseInt (c .getAttribute ("cx")) + offset [0]));
+			c .setAttribute ("cy", "" + (parseInt (c .getAttribute ("cy")) + offset [1]));
+		} else if (c .localName == "path") {
+			let path = c .getAttribute ("d") .split (" ");
+
+			let x = parseInt (path [1] .split (",") [0]);
+			let y = parseInt (path [1] .split (",") [1]);
+			
+			path [1] = "" + (x + offset [0]) + "," + (y + offset [1]);
+			
+			c .setAttribute ("d", path .join (" "));
+		} else if (c .localName == "polygon" || c .localName == "polyline") {
+			let path = c .getAttribute ("points") .split (" ");
+			let x,y;
+
+			for (var p = 0; p < path .length; p++) {
+				x = parseInt (path [p] .split (",") [0]);
+				y = parseInt (path [p] .split (",") [1]);
+
+				path [p] = "" + (x + offset [0]) + "," + (y + offset [1]);
+			}
+
+			c .setAttribute ("points", path .join (" "));
+		}
+	}
+}
+
 function get_component_svg_data (component_name) {
 	let data = null;
 
@@ -164,51 +205,51 @@ const component_svg_data = [
 		, "data" : '<circle class="connector positive" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="45" y2="50" stroke="black" stroke-width="2"/><line x1="45" y1="20" x2="45" y2="80" stroke="black" stroke-width="2"/><line x1="55" y1="35" x2="55" y2="65" stroke="black" stroke-width="2"/><line x1="55" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector negative" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "ac_power"
-		, "data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="20" y2="50" stroke="black" stroke-width="2"/><circle cx="50" cy="50" r="30" stroke="black" stroke-width="2" fill="white"/><path d="M 30,50 Q 40,30 50,50 T 70,50" stroke="black" stroke-width="2" fill="none"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="20" y2="50" stroke="black" stroke-width="2"/><circle cx="50" cy="50" r="30" stroke="black" stroke-width="2" fill="white"/><path d="M 30,50 q 10,-20 20,0 t 20,0" stroke="black" stroke-width="2" fill="none"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "ground"
-		,"data" : '<circle class="connector" cx="50" cy="3" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="50" y1="5" x2="50" y2="50" stroke="black" stroke-width="2"/><line x1="15" y1="50" x2="85" y2="50" stroke="black" stroke-width="2"/><line x1="25" y1="60" x2="75" y2="60" stroke="black" stroke-width="2"/><line x1="35" y1="70" x2="65" y2="70" stroke="black" stroke-width="2"/><line x1="45" y1="80" x2="55" y2="80" stroke="black" stroke-width="2"/><line x1="49" y1="90" x2="51" y2="90" stroke="black" stroke-width="2"/>'
+		, "data" : '<circle class="connector" cx="50" cy="3" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="50" y1="5" x2="50" y2="50" stroke="black" stroke-width="2"/><line x1="15" y1="50" x2="85" y2="50" stroke="black" stroke-width="2"/><line x1="25" y1="60" x2="75" y2="60" stroke="black" stroke-width="2"/><line x1="35" y1="70" x2="65" y2="70" stroke="black" stroke-width="2"/><line x1="45" y1="80" x2="55" y2="80" stroke="black" stroke-width="2"/><line x1="49" y1="90" x2="51" y2="90" stroke="black" stroke-width="2"/>'
 	}, {
 		"name" : "resistor"
-		,"data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="20" y2="50" stroke="black" stroke-width="2"/><polyline points="20,50 25,40 35,60 45,40 55,60 65,40 75,60 80,50" fill="none" stroke="black" stroke-width="2"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="20" y2="50" stroke="black" stroke-width="2"/><polyline points="20,50 25,40 35,60 45,40 55,60 65,40 75,60 80,50" fill="none" stroke="black" stroke-width="2"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "capacitor"
-		,"data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="40" y2="50" stroke="black" stroke-width="2"/><line x1="40" y1="20" x2="40" y2="80" stroke="black" stroke-width="2"/><rect x="41" y="20" width="18" height="60" fill="white" stroke="none"/><line x1="60" y1="20" x2="60" y2="80" stroke="black" stroke-width="2"/><line x1="60" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="40" y2="50" stroke="black" stroke-width="2"/><line x1="40" y1="20" x2="40" y2="80" stroke="black" stroke-width="2"/><rect x="41" y="20" width="18" height="60" fill="white" stroke="none"/><line x1="60" y1="20" x2="60" y2="80" stroke="black" stroke-width="2"/><line x1="60" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "inductor"
-		,"data" : '<circle class="connector" cx="5" cy="50" r="4" stroke="black" stroke-width="1.5" fill="white"/><line x1="8.5" y1="50" x2="26.5" y2="50" stroke="black" stroke-width="3"/><path d="M 25,50 A 15 15 0 0 1 70 50" fill="none" stroke="black" stroke-width="3"/><path d="M 50,50 A 15 15 0 0 1 95 50" fill="none" stroke="black" stroke-width="3"/><path d="M 75,50 A 15 15 0 0 1 120 50" fill="none" stroke="black" stroke-width="3"/><path d="M 100,50 A 15 15 0 0 1 145 50" fill="none" stroke="black" stroke-width="3"/><path d="M 70,50 A 10 15 0 0 1 50 50" fill="none" stroke="black" stroke-width="3"/><path d="M 95,50 A 10 15 0 0 1 75 50" fill="none" stroke="black" stroke-width="3"/><path d="M 120,50 A 10 15 0 0 1 100 50" fill="none" stroke="black" stroke-width="3"/><line x1="143.5" y1="50" x2="161.5" y2="50" stroke="black" stroke-width="3"/><circle class="connector" cx="165" cy="50" r="4" stroke="black" stroke-width="1.5" fill="white"/>'
+		, "data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="16" y2="50" stroke="black" stroke-width="2"/><path d="M 15,50 a 10,12.5 0 0 1 25,0" fill="none" stroke="black" stroke-width="2"/><path d="M 40,50 a 5,10 0 0 1 -10,0" fill="none" stroke="black" stroke-width="2"/><path d="M 30,50 a 10,12.5 0 0 1 25,0" fill="none" stroke="black" stroke-width="2"/><path d="M 55,50 a 5,10 0 0 1 -10,0" fill="none" stroke="black" stroke-width="2"/><path d="M 45,50 a 10,12.5 0 0 1 25,0" fill="none" stroke="black" stroke-width="2"/><path d="M 70,50 a 5,10 0 0 1 -10,0" fill="none" stroke="black" stroke-width="2"/><path d="M 60,50 a 10,12.5 0 0 1 25,0" fill="none" stroke="black" stroke-width="2"/><line x1="84" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "switch"
-		,"data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="30.5" y2="50" stroke="black" stroke-width="2"/><line x1="30" y1="50" x2="65" y2="25" stroke="black" stroke-width="2"/><line x1="70" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="30.5" y2="50" stroke="black" stroke-width="2"/><line x1="30" y1="50" x2="65" y2="25" stroke="black" stroke-width="2"/><line x1="70" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "fuse"
-		,"data" : '	<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="20" y2="50" stroke="black" stroke-width="2"/><rect x="20" y="40" width="60" height="20" fill="white" stroke="black" stroke-width="2"/><line x1="20" y1="50" x2="80" y2="50" stroke="black" stroke-width="0.5"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="20" y2="50" stroke="black" stroke-width="2"/><rect x="20" y="40" width="60" height="20" fill="white" stroke="black" stroke-width="2"/><line x1="20" y1="50" x2="80" y2="50" stroke="black" stroke-width="0.5"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "binary_buffer_gate"
-		,"data" : '<circle class="connector input" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="25" y2="50" stroke="black" stroke-width="2"/><polygon points="25,25 75,50 25,75" fill="white" stroke="black" stroke-width="2"/><line x1="75" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector input" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="25" y2="50" stroke="black" stroke-width="2"/><polygon points="25,25 75,50 25,75" fill="white" stroke="black" stroke-width="2"/><line x1="75" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "binary_not_gate"
-		,"data" : '<circle class="connector input" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="none"/><line x1="5" y1="50" x2="20.5" y2="50" stroke="black" stroke-width="2"/><polygon points="20.5,25 70.5,50 20.5,75" stroke="black" stroke-width="2" fill="white"/><circle cx="75" cy="50" r="5" stroke="black" stroke-width="2" fill="white"/><line x1="80.5" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="none"/>'
+		, "data" : '<circle class="connector input" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="none"/><line x1="5" y1="50" x2="20.5" y2="50" stroke="black" stroke-width="2"/><polygon points="20.5,25 70.5,50 20.5,75" stroke="black" stroke-width="2" fill="white"/><circle cx="75" cy="50" r="5" stroke="black" stroke-width="2" fill="white"/><line x1="80.5" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="none"/>'
 	}, {
 		"name" : "binary_or_gate"
-		,"data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="30" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="30" y2="62.5" stroke="black" stroke-width="2"/><path d="M 17.5,25 A 75 55 -25 0 1 75 50 L 75,50 A 75 55 25 0 1 17.5 75 L 17.5,75 A 15 25 0 0 0 17.5 25" stroke="black" stroke-width="2" fill="white"/><line x1="75" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="30" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="30" y2="62.5" stroke="black" stroke-width="2"/><path d="M 17.5,25 a 75,55 -25 0 1 57.5,25 a 75,55 25 0 1 -57.5,25 a 15,25 0 0 0 0,-50" stroke="black" stroke-width="2" fill="white"/><line x1="75" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "binary_nor_gate"
-		,"data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="25" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="25" y2="62.5" stroke="black" stroke-width="2"/><path d="M 12.5,25 A 75 55 -25 0 1 70 50 L 70,50 A 75 55 25 0 1 12.5 75 L 12.5,75 A 15 25 0 0 0 12.5 25" stroke="black" stroke-width="2" fill="white"/><circle cx="75" cy="50" r="5" stroke="black" stroke-width="2" fill="white"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="25" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="25" y2="62.5" stroke="black" stroke-width="2"/><path d="M 12.5,25 a 75,55 -25 0 1 57.5,25 a 75,55 25 0 1 -57.5,25 a 15,25 0 0 0 0,-50" stroke="black" stroke-width="2" fill="white"/><circle cx="75" cy="50" r="5" stroke="black" stroke-width="2" fill="white"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "binary_and_gate"
-		,"data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="22.5" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="22.5" y2="62.5" stroke="black" stroke-width="2"/><path d="M 22.5,25 L 52.5,25 A 25 25 0 0 1 52.5 75 L 22.5,75 Z" stroke="black" stroke-width="2" fill="white"/><line x1="77.5" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="22.5" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="22.5" y2="62.5" stroke="black" stroke-width="2"/><path d="M 22.5,25 l 30,0 a 25,25 0 0 1 0,50 l -30,0 z" stroke="black" stroke-width="2" fill="white"/><line x1="77.5" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "binary_nand_gate"
-		,"data" : '	<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="17.5" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="17.5" y2="62.5" stroke="black" stroke-width="2"/><path d="M 17.5,25 L 47.5,25 A 25 25 0 0 1 47.5 75 L 17.5,75 Z" stroke="black" stroke-width="2" fill="white"/><circle cx="77.5" cy="50" r="5" stroke="black" stroke-width="2" fill="white" /><line x1="82.5" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="17.5" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="17.5" y2="62.5" stroke="black" stroke-width="2"/><path d="M 17.5,25 l 30,0 a 25,25 0 0 1 0,50 l -30,0 z" stroke="black" stroke-width="2" fill="white"/><circle cx="77.5" cy="50" r="5" stroke="black" stroke-width="2" fill="white" /><line x1="82.5" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "binary_xor_gate"
-		,"data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="35" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="35" y2="62.5" stroke="black" stroke-width="2"/><path d="M 22.5,25 A 75 55 -25 0 1 80 50 L 80,50 A 75 55 25 0 1 22.5 75 L 22.5,75 A 15 25 0 0 0 22.5 25" stroke="black" stroke-width="2" fill="white"/><path d="M 17,27.5 A 20 25 0 0 1 17 72.5" stroke="black" stroke-width="2" fill="none"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="35" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="35" y2="62.5" stroke="black" stroke-width="2"/><path d="M 22.5,25 a 75,55 -25 0 1 57.5,25 a 75,55 25 0 1 -57.5,25 a 15,25 0 0 0 0,-50" stroke="black" stroke-width="2" fill="white"/><path d="M 17,27.5 a 20,25 0 0 1 0,45" stroke="black" stroke-width="2" fill="none"/><line x1="80" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "binary_xnor_gate"
-		,"data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="30" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="30" y2="62.5" stroke="black" stroke-width="2"/><path d="M 17.5,25 A 75 55 -25 0 1 75 50 L 75,50 A 75 55 25 0 1 17.5 75 L 17.5,75 A 15 25 0 0 0 17.5 25" stroke="black" stroke-width="2" fill="white"/><path d="M 12.5,27.5 A 20 25 0 0 1 12.5 72.5" stroke="black" stroke-width="2" fill="none"/><circle cx="80" cy="50" r="5" stroke="black" stroke-width="2" fill="white"/><line x1="85" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="30" y2="37.5" stroke="black" stroke-width="2"/><circle class="connector input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="30" y2="62.5" stroke="black" stroke-width="2"/><path d="M 17.5,25 a 75,55 -25 0 1 57.5,25 a 75,55 25 0 1 -57.5,25 a 15,25 0 0 0 0,-50" stroke="black" stroke-width="2" fill="white"/><path d="M 12.5,27.5 a 20,25 0 0 1 0,45" stroke="black" stroke-width="2" fill="none"/><circle cx="80" cy="50" r="5" stroke="black" stroke-width="2" fill="white"/><line x1="85" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "zener_diode"
-		,"data" : '<circle class="connector input" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="25" y2="50" stroke="black" stroke-width="2"/><polygon points="25,25 75,50 25,75" fill="white" stroke="black" stroke-width="2"/><polyline points="65,20 75,25 75,75 85,80" fill="none" stroke="black" stroke-width="2"/><line x1="75" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
+		, "data" : '<circle class="connector input" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="25" y2="50" stroke="black" stroke-width="2"/><polygon points="25,25 75,50 25,75" fill="white" stroke="black" stroke-width="2"/><polyline points="65,20 75,25 75,75 85,80" fill="none" stroke="black" stroke-width="2"/><line x1="75" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="connector output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}
 ];
