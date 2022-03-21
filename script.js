@@ -1,4 +1,106 @@
-/*-------------------- Constants and Variables and Structures --------------------*/
+/*------------------------------ Data Structures ------------------------------*/
+
+class Coordinate {
+	constructor (
+		x = 0
+		, y = 0
+	) {
+		this .x = x;
+		this .y = y;
+	}
+}
+
+class Dimention {
+	constructor (
+		width = 0
+		, height = 0
+	) {
+		this .width = width;
+		this .height = height;
+	}
+}
+
+class Component {
+	constructor (
+		name = ""
+		, base_point = new Coordinate ()
+		, dimention = new Dimention ()
+		, rotation = 0
+	) {
+		this .id = "component_" + ++ component_counter;
+		this .name = name;
+		this .base_point = base_point;
+		this .sub_points = [];
+		this .dimention = dimention;
+		this .rotation = rotation;
+		this .nodes = [];
+	}
+}
+
+class Sub_Diagram_Anchor {
+	constructor (
+		type = ""
+		, anchor_points = [new Coordinate ()]
+	) {
+		this .type = type;
+		this .anchor_points = anchor_points;
+	}
+}
+
+class Component_Node {
+	constructor (
+		i = 0
+		, id = ""
+	) {
+		this .sub_diagram_index = i;
+		this .node_id = id;
+	}
+}
+
+class Node {
+	constructor (
+		type = ""
+		, position = new Coordinate ()
+		, base_component_id = ""
+	) {
+		this .id = "node_" + ++ node_counter;
+		this .type = type;
+		this .position = position;
+		this .base_component_id = base_component_id;
+		this .linked_connection_ids = [];
+	}
+}
+
+class Connection {
+	constructor (
+		node_1_id = ""
+		, component_1_id = ""
+		, node_2_id = ""
+		, component_2_id = ""
+	) {
+		this .id = "connection_" + ++ connection_counter;
+		this .node_1_id = node_1_id;
+		this .component_1_id = component_1_id;
+		this .node_2_id = node_2_id;
+		this .component_2_id = component_2_id;
+		this .connector_colour = "black";
+	}
+}
+
+class Link {
+	constructor (
+		connection_id = ""
+		, connected_node_index = 0
+		, node_position = new Coordinate ()
+	) {
+		this .connection_id = connection_id
+		this .connected_node_index = connected_node_index
+		this .node_position = node_position
+	}
+}
+
+
+/*------------------------------ Constants and Variables ------------------------------*/
 
 const media_directory = '..';
 
@@ -8,52 +110,9 @@ var selected_component_tool = null;
 var selected_component = null;
 var component_position = null;
 
-var component_count = 0;
-var node_count = 0;
-var connection_count = 0;
-
-class Component {
-	constructor (type, base_X, base_Y, width, height, rotation) {
-		this .id = "component_" + ++ component_count;
-		this .type = type;
-
-		this .base_X = base_X;
-		this .base_Y = base_Y;
-
-		this .width = width;
-		this .height = height;
-		this .rotation = rotation;
-
-		this .nodes = [];
-	}
-}
-
-class Node {
-	constructor (type, position_X, position_Y, component_id) {
-		this .id = "node_" + ++ node_count;
-		this .type = type;
-
-		this .position_X = position_X;
-		this .position_Y = position_Y;
-
-		this .component_id = component_id;
-		this .linked_with = [];
-	}
-}
-
-class Connection {
-	constructor (node_1_id, component_1_id, node_2_id, component_2_id) {
-		this .id = "connection_" + ++ connection_count;
-
-		this .node_1_id = node_1_id;
-		this .component_1_id = component_1_id;
-
-		this .node_2_id = node_2_id;
-		this .component_2_id = component_2_id;
-
-		this .connector_colour = "black";
-	}
-}
+var component_counter = 0;
+var node_counter = 0;
+var connection_counter = 0;
 
 var component = null;
 var component_image = null;
@@ -104,45 +163,28 @@ function set_circuit_listeners () {
 	circuit .addEventListener ("drop", (event) => {
 		event .preventDefault ();
 
-		if (selected_component_tool .classList [0] == "component-tool") {
-			mouse_x = event .clientX;
-			mouse_y = event .clientY;
+		mouse_x = event .clientX;
+		mouse_y = event .clientY;
 
+		if (selected_component_tool .classList [0] == "component-tool") {
 			component = new Component ();
-			component .type = selected_component_tool .getAttribute ("alt");
-			component .width = 100;
-			component .height = 100;
-			component .rotation = 0;
-			component .base_X = mouse_x - 223 - mouse_dx;
-			component .base_Y = mouse_y - 3 - mouse_dy;
+			component .name = selected_component_tool .getAttribute ("alt");
+			component .dimention = new Dimention (100, 100);
 
 			component_image = document .createElementNS ("http://www.w3.org/2000/svg", "g");
 			component_image .setAttribute ("id", component .id);
 			component_image .setAttribute ("class", "component");
 			component_image .setAttribute ("draggable", "true");
-			component_image .innerHTML = get_component_svg_data (component .type);
+			component_image .style .backgroundColor = "white";
+			component_image .innerHTML = get_component_svg_data (component .name);
 
-			for (var i = 0; i < component_image .children .length; i++) {
-				if (component_image .children [i] .classList .contains ("node")) {
-					node = new Node (
-						component_image .children [i] .classList [2]
-						, parseInt (component_image .children [i] .getAttribute ("cx"))
-						, parseInt (component_image .children [i] .getAttribute ("cy"))
-						, component .id
-					);
+			set_component_values (component, component_image)
+			component_list .push (component);
 
-					node_list .push (node);
-					component .nodes .push (node .id);
-					component_image .children [i] .setAttribute ("id", node .id);
-				}
-			}
-
-			moveComponent (component_image, [component .base_X, component .base_Y]);
+			move_component (component_image, [mouse_x - 223 - mouse_dx, mouse_y - 3 - mouse_dy]);
 			set_componet_events (component_image, [component .base_X, component .base_Y]);
 
-			component_list .push (component);
 			event .target .appendChild (component_image);
-
 			selected_component_tool = null;
 		}
 	});
@@ -164,12 +206,88 @@ function set_overlay_events () {
 	});
 }
 
-function set_componet_events (component_image, initial_position) {
+function set_component_values (component = new Component (), component_image) {
+	var sub_diagram;
+
+	for (let i = 0; i < component_image .children .length; i++) {
+		sub_diagram = component_image .children [i];
+
+		if (sub_diagram .localName == "line") {
+			component .sub_points .push (new Sub_Diagram_Anchor (
+				"line"
+				, [new Coordinate (
+					parseInt (sub_diagram .getAttribute ("x1"))
+					, parseInt (sub_diagram .getAttribute ("y1"))
+				), new Coordinate (
+					parseInt (sub_diagram .getAttribute ("x2"))
+					, parseInt (sub_diagram .getAttribute ("y2"))
+				)]
+			));
+		} else if (sub_diagram .localName == "rect") {
+			component .sub_points .push (new Sub_Diagram_Anchor (
+				"rect"
+				, [new Coordinate (
+					parseInt (sub_diagram .getAttribute ("x"))
+					, parseInt (sub_diagram .getAttribute ("y"))
+				)]
+			));
+		} else if (sub_diagram .localName == "circle") {
+			component .sub_points .push (new Sub_Diagram_Anchor (
+				"circle"
+				, [new Coordinate (
+					parseInt (sub_diagram .getAttribute ("cx"))
+					, parseInt (sub_diagram .getAttribute ("cy"))
+				)]
+			));
+
+		} else if (sub_diagram .localName == "path") {
+			let path = sub_diagram .getAttribute ("d") .split (" ");
+
+			component .sub_points .push (new Sub_Diagram_Anchor (
+				"path"
+				, [new Coordinate (
+					parseInt (path [1] .split (",") [0])
+					, parseInt (path [1] .split (",") [1])
+				)]
+			));
+		} else if (sub_diagram .localName == "polygon" || sub_diagram .localName == "polyline") {
+			let path = sub_diagram .getAttribute ("points") .split (" ");
+			let points = [];
+
+			for (var p = 0; p < path .length; p++) {
+				points .push (new Coordinate (
+					parseInt (path [p] .split (",") [0])
+					, parseInt (path [p] .split (",") [1])
+				));
+			}
+
+			component .sub_points .push (new Sub_Diagram_Anchor (
+				sub_diagram .localName
+				, points
+			));
+		}
+
+		if (sub_diagram .classList .contains ("node")) {
+			let node = new Node (
+				component_image .children [i] .classList [1]
+				, new Coordinate (
+					component .sub_points [component .sub_points .length - 1] .anchor_points [0] .x
+					, component .sub_points [component .sub_points .length - 1] .anchor_points [0] .y
+				)
+				, component .id
+			);
+
+			node_list .push (node);
+			component .nodes .push (new Component_Node (i, node .id));
+			component_image .children [i] .setAttribute ("id", node .id);
+		}
+	}
+}
+
+function set_componet_events (component_image, initial_position = new Coordinate()) {
 	var dragging = false;
 	var connecting = false;
-	// var initial_drag_position;
 	let circuit = document .getElementById ("circuit");
-	// let current_position = initial_position;
 	let old_position = initial_position;
 	var connection_line = null;
 	var connection_lines = document .getElementById ("connections");
@@ -177,7 +295,6 @@ function set_componet_events (component_image, initial_position) {
 	component_image .addEventListener ("mousedown", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
-		// initial_drag_position = [mouse_x, mouse_y];
 		old_position = [mouse_x, mouse_y];
 
 		if (event .target .classList .contains ("node")) {
@@ -187,7 +304,6 @@ function set_componet_events (component_image, initial_position) {
 			connection = new Connection ();
 			connection .component_1_id = component_image .getAttribute ("id");
 			connection .node_1_id = event .target .getAttribute ("id");
-			//console .log (component_image);
 
 			connection_line = document .createElementNS ("http://www.w3.org/2000/svg", "line");
 			connection_line .setAttribute ("class", "connection");
@@ -215,9 +331,9 @@ function set_componet_events (component_image, initial_position) {
 		}
 
 		if (dragging) {
-			moveComponent (component_image, [mouse_x - old_position [0], mouse_y - old_position [1]]);
-			moveConnections (component_image .getAttribute ("id"), [mouse_x - old_position [0], mouse_y - old_position [1]]);
-			
+			move_component (component_image, [mouse_x - old_position [0], mouse_y - old_position [1]]);
+			move_connections (component_image .getAttribute ("id"));
+
 			old_position = [mouse_x, mouse_y];
 		}
 	});
@@ -230,7 +346,7 @@ function set_componet_events (component_image, initial_position) {
 			if (event .target .classList .contains ("node")) {
 				node = get_node_by_id (event .target .getAttribute ("id"));
 				connection .node_2_id = node .id;
-				connection .component_2_id = node .component_id;
+				connection .component_2_id = node .base_component_id;
 
 				connection_line .setAttribute ("id", connection .id);
 				connection_line .setAttribute ("x2", event .target .getAttribute ("cx"));
@@ -243,81 +359,92 @@ function set_componet_events (component_image, initial_position) {
 		}
 
 		if (dragging) {
-			moveComponent (component_image, [mouse_x - old_position [0], mouse_y - old_position [1]]);
-			moveConnections (component_image .getAttribute ("id"), [mouse_x - old_position [0], mouse_y - old_position [1]]);
+			move_component (component_image, [mouse_x - old_position [0], mouse_y - old_position [1]]);
+			move_connections (component_image .getAttribute ("id"));
+
 			old_position = [mouse_x, mouse_y];
 		}
 
-		//initial_position = current_position;
 		connecting = false;
 		dragging = false;
-
-		//component .style .stroke = "blue";
-		for (i = 0; i < component_image .children .length; i++) {
-		//	component .children [i] .setAttribute ("stroke", "blue");
-			//console .log (component .children [i]);
-		}
 	});
 }
 
-function moveComponent (component_image, offset) {
-	for (i = 0; i < component_image .children .length; i++) {
-		let c = component_image .children [i];
+function move_component (component_image, offset = [0, 0]) {
+	var sub_diagram;
+	var component = get_component_by_id (component_image .getAttribute ("id"));
 
-		if (c .localName == "line") {
-			c .setAttribute ("x1", "" + (parseInt (c .getAttribute ("x1")) + offset [0]));
-			c .setAttribute ("y1", "" + (parseInt (c .getAttribute ("y1")) + offset [1]));
-			c .setAttribute ("x2", "" + (parseInt (c .getAttribute ("x2")) + offset [0]));
-			c .setAttribute ("y2", "" + (parseInt (c .getAttribute ("y2")) + offset [1]));
-		} else if (c .localName == "rect") {
-			c .setAttribute ("x", "" + (parseInt (c .getAttribute ("x")) + offset [0]));
-			c .setAttribute ("y", "" + (parseInt (c .getAttribute ("y")) + offset [1]));
-		} else if (c .localName == "circle") {
-			c .setAttribute ("cx", "" + (parseInt (c .getAttribute ("cx")) + offset [0]));
-			c .setAttribute ("cy", "" + (parseInt (c .getAttribute ("cy")) + offset [1]));
-		} else if (c .localName == "path") {
-			let path = c .getAttribute ("d") .split (" ");
+	component .base_point .x += offset [0];
+	component .base_point .y += offset [1];
 
-			let x = parseInt (path [1] .split (",") [0]);
-			let y = parseInt (path [1] .split (",") [1]);
+	for (let i = 0; i < component_image .children .length; i++) {
+		sub_diagram = component_image .children [i];
+
+		if (sub_diagram .localName == "line") {
+			sub_diagram .setAttribute ("x1", "" + (component .base_point .x + component .sub_points [i] .anchor_points [0] .x));
+			sub_diagram .setAttribute ("y1", "" + (component .base_point .y + component .sub_points [i] .anchor_points [0] .y));
+			sub_diagram .setAttribute ("x2", "" + (component .base_point .x + component .sub_points [i] .anchor_points [1] .x));
+			sub_diagram .setAttribute ("y2", "" + (component .base_point .y + component .sub_points [i] .anchor_points [1] .y));
+		} else if (sub_diagram .localName == "rect") {
+			sub_diagram .setAttribute ("x", "" + (component .base_point .x + component .sub_points [i] .anchor_points [0] .x));
+			sub_diagram .setAttribute ("y", "" + (component .base_point .y + component .sub_points [i] .anchor_points [0] .y));
+		} else if (sub_diagram .localName == "circle") {
+			sub_diagram .setAttribute ("cx", "" + (component .base_point .x + component .sub_points [i] .anchor_points [0] .x));
+			sub_diagram .setAttribute ("cy", "" + (component .base_point .y + component .sub_points [i] .anchor_points [0] .y));
+		} else if (sub_diagram .localName == "path") {
+			let path = sub_diagram .getAttribute ("d") .split (" ");
+
+			path [1] = ""
+				+ (component .base_point .x + component .sub_points [i] .anchor_points [0] .x)
+				+ ","
+				+ (component .base_point .y + component .sub_points [i] .anchor_points [0] .y);
+
+			sub_diagram .setAttribute ("d", path .join (" "));
+		} else if (sub_diagram .localName == "polygon" || sub_diagram .localName == "polyline") {
+			let path = "";
+			let length = sub_diagram .getAttribute ("points") .split (" ") .length;
+
+			for (var p = 0; p < length; p++) {
+				path += 
+					(component .base_point .x + component .sub_points [i] .anchor_points [p] .x)
+					+ ","
+					+ (component .base_point .y + component .sub_points [i] .anchor_points [p] .y);
 			
-			path [1] = "" + (x + offset [0]) + "," + (y + offset [1]);
-			
-			c .setAttribute ("d", path .join (" "));
-		} else if (c .localName == "polygon" || c .localName == "polyline") {
-			let path = c .getAttribute ("points") .split (" ");
-			let x,y;
-
-			for (var p = 0; p < path .length; p++) {
-				x = parseInt (path [p] .split (",") [0]);
-				y = parseInt (path [p] .split (",") [1]);
-
-				path [p] = "" + (x + offset [0]) + "," + (y + offset [1]);
+				if (p < length - 1) {
+					path += " ";
+				}
 			}
 
-			c .setAttribute ("points", path .join (" "));
+			sub_diagram .setAttribute ("points", path);
 		}
+	}
+
+	for (let i = 0; i < component .nodes .length; i++) {
+		let node = get_node_by_id (component .nodes [i] .node_id);
+
+		node .position .x = component .base_point .x + component .sub_points [component .nodes [i] .sub_diagram_index] .anchor_points [0] .x;
+		node .position .y = component .base_point .y + component .sub_points [component .nodes [i] .sub_diagram_index] .anchor_points [0] .y;
 	}
 }
 
-function moveConnections (component_id, offset) {
-	var links = get_links_by_id (component_id);
+function move_connections (component_id = "") {
+	const links = get_links_by_component_id (component_id);
 	var connection_line;
 
-	for (var i = 0; i < links .length; i++) {
-		connection_line = document .getElementById (links [i][0]);
+	for (let i = 0; i < links .length; i++) {
+		connection_line = document .getElementById (links [i] .connection_id);
 
-		if (links [i][1] == 1) {
-			connection_line .setAttribute ("x1", "" + (parseInt (connection_line .getAttribute ("x1")) + offset [0]));
-			connection_line .setAttribute ("y1", "" + (parseInt (connection_line .getAttribute ("y1")) + offset [1]));
+		if (links [i] .connected_node_index == 1) {
+			connection_line .setAttribute ("x1", links [i] .node_position .x);
+			connection_line .setAttribute ("y1", links [i] .node_position .y);
 		} else {
-			connection_line .setAttribute ("x2", "" + (parseInt (connection_line .getAttribute ("x2")) + offset [0]));
-			connection_line .setAttribute ("y2", "" + (parseInt (connection_line .getAttribute ("y2")) + offset [1]));
+			connection_line .setAttribute ("x2", links [i] .node_position .x);
+			connection_line .setAttribute ("y2", links [i] .node_position .y);
 		}
 	}
 }
 
-function get_component_svg_data (component_name) {
+function get_component_svg_data (component_name = "") {
 	let data = null;
 
 	for (var i = 0 ; i < component_svg_data .length; i++) {
@@ -330,7 +457,7 @@ function get_component_svg_data (component_name) {
 	return data;
 }
 
-function get_component_by_id (component_id) {
+function get_component_by_id (component_id = "") {
 	var component;
 
 	for (var i = 0; i < component_list .length; i++) {
@@ -343,7 +470,7 @@ function get_component_by_id (component_id) {
 	return component;
 }
 
-function get_node_by_id (node_id) {
+function get_node_by_id (node_id = "") {
 	var node;
 
 	for (var i = 0; i < node_list .length; i++) {
@@ -356,14 +483,14 @@ function get_node_by_id (node_id) {
 	return node;
 }
 
-function get_links_by_id (component_id) {
+function get_links_by_component_id (component_id = "") {
 	var links = [];
 
 	for (var i = 0; i < connection_list .length; i++) {
 		if (connection_list [i] .component_1_id == component_id) {
-			links .push ([connection_list [i] .id, 1]);
+			links .push (new Link (connection_list [i] .id, 1, get_node_by_id (connection_list [i] .node_1_id) .position));
 		} else if (connection_list [i] .component_2_id == component_id) {
-			links .push ([connection_list [i] .id, 2]);
+			links .push (new Link (connection_list [i] .id, 2, get_node_by_id (connection_list [i] .node_2_id) .position));
 		}
 	}
 
@@ -380,6 +507,9 @@ function generate_random_hex_colour () {
 
 	return colour;
 }
+
+
+/*------------------------------ Data Constants ------------------------------*/
 
 const colour_hex_palatte = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
 
@@ -413,7 +543,7 @@ const component_svg_data = [
 		, "data" : '<circle class="node input" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="25" y2="50" stroke="black" stroke-width="2"/><polygon points="25,25 75,50 25,75" fill="white" stroke="black" stroke-width="2"/><line x1="75" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="node output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "binary_not_gate"
-		, "data" : '<circle class="node input" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="none"/><line x1="5" y1="50" x2="20.5" y2="50" stroke="black" stroke-width="2"/><polygon points="20.5,25 70.5,50 20.5,75" stroke="black" stroke-width="2" fill="white"/><circle cx="75" cy="50" r="5" stroke="black" stroke-width="2" fill="white"/><line x1="80.5" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="node output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="none"/>'
+		, "data" : '<circle class="node input" cx="3" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="50" x2="20.5" y2="50" stroke="black" stroke-width="2"/><polygon points="20.5,25 70.5,50 20.5,75" stroke="black" stroke-width="2" fill="white"/><circle cx="75" cy="50" r="5" stroke="black" stroke-width="2" fill="white"/><line x1="80.5" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="node output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
 	}, {
 		"name" : "binary_or_gate"
 		, "data" : '<circle class="node input" cx="3" cy="37.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="37.5" x2="30" y2="37.5" stroke="black" stroke-width="2"/><circle class="node input" cx="3" cy="62.5" r="2.5" stroke="black" stroke-width="1" fill="white"/><line x1="5" y1="62.5" x2="30" y2="62.5" stroke="black" stroke-width="2"/><path d="M 17.5,25 a 75,55 -25 0 1 57.5,25 a 75,55 25 0 1 -57.5,25 a 15,25 0 0 0 0,-50" stroke="black" stroke-width="2" fill="white"/><line x1="75" y1="50" x2="95" y2="50" stroke="black" stroke-width="2"/><circle class="node output" cx="97" cy="50" r="2.5" stroke="black" stroke-width="1" fill="white"/>'
