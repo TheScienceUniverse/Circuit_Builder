@@ -13,8 +13,8 @@
 		<div id="circuit-container">
 			<div id="circuit-toolbox">
 				<div id="component-search-box">
-					<textarea rows="1"></textarea>
-					<button>
+					<textarea id="component-search-text-box" rows="1"></textarea>
+					<button id="component-search-button" title="Component Search Button">
 						<img src="./media/search.svg" alt="Search for Components">
 					</button>
 				</div>
@@ -38,9 +38,16 @@
 					<div class="component-box"><img class="component-tool" src="./media/zener_diode.svg" alt="zener_diode" title="Zener Diode"></div>
 				</div>
 			</div>
-			<svg xmlns="http://www.w3.org/2000/svg" id="circuit">
-				<g id="connections"></g>
-			</svg>
+			<div id="circuit-map">
+				<svg xmlns="http://www.w3.org/2000/svg"
+					id="circuit"
+					width="1300"
+					height="710"
+					viewbox="0 0 1300 710"
+				>
+					<g id="connections"></g>
+				</svg>
+			</div>
 			<div id="circuit-overlay">
 				<p class="overlay_key">View coordinates:</p>
 				<p class="overlay_value"></p>

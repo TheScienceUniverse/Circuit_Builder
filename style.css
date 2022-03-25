@@ -27,7 +27,7 @@
 	vertical-align: middle;
 }
 
-#component-search-box textarea {
+#component-search-text-box {
 	width: 190px;
 	height: 30px;
 	resize: none;
@@ -37,14 +37,14 @@
 	overflow: hidden;
 }
 
-#component-search-box button {
+#component-search-button {
 	width: 30px;
 	height: 30px;
 	position: absolute;
 	right: 0;
 }
 
-#component-search-box button img {
+#component-search-button img {
 	width: 100%;
 	height: 100%;
 }
@@ -60,6 +60,7 @@
 }
 
 .component-box {
+	display: block;
 	width: 100%;
 	height: 100px;
 	background-color: lightgray;
@@ -68,13 +69,17 @@
 	text-align: center;
 }
 
+.component-box.absent {
+	display: none;
+}
+
 .component-tool {
 	display: inline-block;
 	width: 100px;
 	height: 100px;
 }
 
-#circuit {
+#circuit-map {
 	position: absolute;
 	left: 220px;
 	top: 0;

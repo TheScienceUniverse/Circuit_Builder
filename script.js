@@ -10,7 +10,7 @@ class Coordinate {
 	}
 }
 
-class Dimention {
+class Dimension {
 	constructor (
 		width = 0
 		, height = 0
@@ -24,14 +24,14 @@ class Component {
 	constructor (
 		name = ""
 		, base_point = new Coordinate ()
-		, dimention = new Dimention ()
+		, dimension = new Dimension ()
 		, rotation = 0
 	) {
 		this .id = "component_" + ++ component_counter;
 		this .name = name;
 		this .base_point = base_point;
 		this .sub_points = [];
-		this .dimention = dimention;
+		this .dimension = dimension;
 		this .rotation = rotation;
 		this .nodes = [];
 	}
@@ -123,17 +123,62 @@ var component_list = [];
 var node_list = [];
 var connection_list = [];
 
+var circuit_offset = new Coordinate (0, 0);
+var circuit_movement_activated = false;
+
+const circuit_default_dimension = new Dimension (0, 0);
+var circuit_dimension = new Dimension (0, 0);
+
 
 /*------------------------------ Functionalities ------------------------------*/
 
 function init () {
+	let circuit = document .getElementById ("circuit");
+	circuit_default_dimension .width = parseInt (circuit .getAttribute ("width"));
+	circuit_default_dimension .height = parseInt (circuit .getAttribute ("height"));
+	circuit_dimension .width = circuit_default_dimension .width;
+	circuit_dimension .height = circuit_default_dimension .height;
+
+	set_component_search_box_events ()
 	set_overlay_events ();
 	set_circuit_listeners ();
+}
+
+function set_component_search_box_events () {
+	let search_text_box = document .getElementById ("component-search-text-box");
+	let tool_list = document .getElementById ("component-tool-list");
+	let search_button = document .getElementById ("component-search-button");
+	var search_button_active = false;
+
+	search_button .addEventListener ("click", (event) => {
+		let search_text = search_text_box .value .toLowerCase ();
+		
+		if (!search_button_active) {
+			search_button_active = true;
+			event .target .setAttribute ("src", "./media/close.svg");
+
+			for (let i = 0; i < tool_list .children .length; i++) {
+				if (search_text != "" && !(tool_list .children [i] .firstChild .getAttribute ("alt") .includes (search_text))) {
+					tool_list .children [i] .classList .add ("absent");
+				}
+			}
+		} else {
+			search_button_active = false;
+			event .target .setAttribute ("src", "./media/search.svg");
+			search_text_box .value = "";
+
+			for (let i = 0; i < tool_list .children .length; i++) {
+				tool_list .children [i] .classList .remove ("absent");
+			}
+		}
+	});
 }
 
 function set_circuit_listeners () {
 	let circuit = document .getElementById ("circuit");
 	var component_tool_list = document .getElementsByClassName ("component-tool");
+	var circuit_moving = false;
+	var initial_position = new Coordinate (0, 0);
 
 	for (i = 0; i < component_tool_list .length; i++) {
 		component_tool_list [i] .addEventListener ("dragstart", (event) => {
@@ -169,7 +214,7 @@ function set_circuit_listeners () {
 		if (selected_component_tool .classList [0] == "component-tool") {
 			component = new Component ();
 			component .name = selected_component_tool .getAttribute ("alt");
-			component .dimention = new Dimention (100, 100);
+			component .dimension = new Dimension (100, 100);
 
 			component_image = document .createElementNS ("http://www.w3.org/2000/svg", "g");
 			component_image .setAttribute ("id", component .id);
@@ -180,12 +225,62 @@ function set_circuit_listeners () {
 
 			set_component_values (component, component_image)
 			component_list .push (component);
-
-			move_component (component_image, [mouse_x - 223 - mouse_dx, mouse_y - 3 - mouse_dy]);
-			set_componet_events (component_image, [component .base_X, component .base_Y]);
-
 			event .target .appendChild (component_image);
+
+			move_component (component .id, new Coordinate (mouse_x - 223 - mouse_dx, mouse_y - 3 - mouse_dy));
+			set_componet_events (component_image, [component .base_X, component .base_Y]);
+			
 			selected_component_tool = null;
+			circuit_movement_activated = true;
+		}
+	});
+
+	circuit .addEventListener ("mousedown", (event) => {
+		mouse_x = event .clientX;
+		mouse_y = event .clientY;
+
+		if (event .target .getAttribute ("id") == "circuit") {
+			circuit_moving = circuit_movement_activated & true;
+			initial_position .x = mouse_x;
+			initial_position .y = mouse_y;
+		}
+	});
+
+	circuit .addEventListener ("mousemove", (event) => {
+		mouse_x = event .clientX;
+		mouse_y = event .clientY;
+
+		if (event .target .getAttribute ("id") == "circuit" && circuit_moving) {
+			let offset = new Coordinate (mouse_x - initial_position .x, mouse_y - initial_position .y);
+
+			circuit_dimension .width += offset .x;
+			circuit_dimension .height += offset .y;
+
+			if (circuit_dimension .width < circuit_default_dimension .width) {
+				circuit_dimension .width = circuit_default_dimension .width;
+			}
+
+			if (circuit_dimension .height < circuit_default_dimension .height) {
+				circuit_dimension .height = circuit_default_dimension .height;
+			}
+
+			circuit .setAttribute ("width", "" + circuit_dimension .width);
+			circuit .setAttribute ("height", "" + circuit_dimension .height);
+			circuit .setAttribute ("viewBox", "0 0 " + circuit_dimension .width + " " + circuit_dimension .height);
+
+			move_all_components (offset);
+
+			initial_position .x = mouse_x;
+			initial_position .y = mouse_y;
+		}
+	});
+
+	circuit .addEventListener ("mouseup", (event) => {
+		mouse_x = event .clientX;
+		mouse_y = event .clientY;
+
+		if (event .target .getAttribute ("id") == "circuit" && circuit_moving) {
+			circuit_moving = false;
 		}
 	});
 }
@@ -331,8 +426,8 @@ function set_componet_events (component_image, initial_position = new Coordinate
 		}
 
 		if (dragging) {
-			move_component (component_image, [mouse_x - old_position [0], mouse_y - old_position [1]]);
-			move_connections (component_image .getAttribute ("id"));
+			move_component (component_image .getAttribute ("id"), new Coordinate (mouse_x - old_position [0], mouse_y - old_position [1]));
+			move_component_connections (component_image .getAttribute ("id"));
 
 			old_position = [mouse_x, mouse_y];
 		}
@@ -359,8 +454,8 @@ function set_componet_events (component_image, initial_position = new Coordinate
 		}
 
 		if (dragging) {
-			move_component (component_image, [mouse_x - old_position [0], mouse_y - old_position [1]]);
-			move_connections (component_image .getAttribute ("id"));
+			move_component (component_image .getAttribute ("id"), new Coordinate (mouse_x - old_position [0], mouse_y - old_position [1]));
+			move_component_connections (component_image .getAttribute ("id"));
 
 			old_position = [mouse_x, mouse_y];
 		}
@@ -370,12 +465,20 @@ function set_componet_events (component_image, initial_position = new Coordinate
 	});
 }
 
-function move_component (component_image, offset = [0, 0]) {
-	var sub_diagram;
-	var component = get_component_by_id (component_image .getAttribute ("id"));
+function move_all_components (offset = new Coordinate (0, 0)) {
+	for (let i = 0; i < component_list .length; i++) {
+		move_component (component_list [i] .id, offset);
+		move_component_connections (component_list [i] .id)
+	}
+}
 
-	component .base_point .x += offset [0];
-	component .base_point .y += offset [1];
+function move_component (component_id, offset = new Coordinate (0, 0)) {
+	var component = get_component_by_id (component_id);
+	var component_image = document .getElementById (component_id);
+	var sub_diagram;
+
+	component .base_point .x += offset .x;
+	component .base_point .y += offset .y;
 
 	for (let i = 0; i < component_image .children .length; i++) {
 		sub_diagram = component_image .children [i];
@@ -427,7 +530,7 @@ function move_component (component_image, offset = [0, 0]) {
 	}
 }
 
-function move_connections (component_id = "") {
+function move_component_connections (component_id = "") {
 	const links = get_links_by_component_id (component_id);
 	var connection_line;
 
@@ -506,6 +609,41 @@ function generate_random_hex_colour () {
 	}
 
 	return colour;
+}
+
+function get_fitting_dimension () {
+	var fitting_dimension = new Dimension (0, 0);
+	var min_x = 0, min_y = 0, max_x = 0, max_y = 0;
+
+	if (component_list .length > 0) {
+		min_x = component_list [0] .base_point .x;
+		min_y = component_list [0] .base_point .y;
+		max_x = min_x;
+		max_y = min_y;
+	}
+
+	for (let i = 1; i < component_list .length; i++) {
+		if (min_x > component_list [i] .base_point .x) {
+			min_x = component_list [i] .base_point .x;
+		}
+
+		if (max_x < component_list [i] .base_point .x) {
+			max_x = component_list [i] .base_point .x;
+		}
+
+		if (min_y > component_list [i] .base_point .y) {
+			min_y = component_list [i] .base_point .y;
+		}
+
+		if (max_y < component_list [i] .base_point .y) {
+			max_y = component_list [i] .base_point .y;
+		}
+	}
+
+	fitting_dimension .width = max_x - min_x + 100;
+	fitting_dimension .height = max_y - min_y + 100;
+
+	return fitting_dimension;
 }
 
 
