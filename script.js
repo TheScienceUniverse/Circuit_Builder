@@ -152,8 +152,8 @@ function set_component_search_box_events () {
 
 	search_button .addEventListener ("click", (event) => {
 		let search_text = search_text_box .value .toLowerCase ();
-		
-		if (!search_button_active) {
+
+		if (!search_button_active && search_text .length > 0) {
 			search_button_active = true;
 			event .target .setAttribute ("src", "./media/close.svg");
 
@@ -179,6 +179,11 @@ function set_circuit_listeners () {
 	var component_tool_list = document .getElementsByClassName ("component-tool");
 	var circuit_moving = false;
 	var initial_position = new Coordinate (0, 0);
+
+	circuit .addEventListener ("contextmenu", (event) => {
+		event .preventDefault ();
+		return false;
+	});
 
 	for (i = 0; i < component_tool_list .length; i++) {
 		component_tool_list [i] .addEventListener ("dragstart", (event) => {
@@ -239,7 +244,7 @@ function set_circuit_listeners () {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 
-		if (event .target .getAttribute ("id") == "circuit") {
+		if ((event .which == 3 || event .button == 3) && event .target .getAttribute ("id") == "circuit") {
 			circuit_moving = circuit_movement_activated & true;
 			initial_position .x = mouse_x;
 			initial_position .y = mouse_y;
@@ -250,7 +255,7 @@ function set_circuit_listeners () {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 
-		if (event .target .getAttribute ("id") == "circuit" && circuit_moving) {
+		if ((event .which == 3 || event .button == 3) && event .target .getAttribute ("id") == "circuit" && circuit_moving) {
 			let offset = new Coordinate (mouse_x - initial_position .x, mouse_y - initial_position .y);
 
 			circuit_dimension .width += offset .x;
@@ -279,7 +284,7 @@ function set_circuit_listeners () {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 
-		if (event .target .getAttribute ("id") == "circuit" && circuit_moving) {
+		if ((event .which == 3 || event .button == 3) && event .target .getAttribute ("id") == "circuit" && circuit_moving) {
 			circuit_moving = false;
 		}
 	});
