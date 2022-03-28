@@ -119,3 +119,19 @@
 	height: 80px;
 	background-color: white;
 }
+
+#component-selection-area {
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 0;
+	border: 1px solid rgb(127, 0, 0);
+	border: 1px solid rgba(255, 0, 0, .5);
+	background-color: rgba(0, 127, 255, .1);
+	-webkit-background-clip: padding-box; /* for Safari */
+	background-clip: padding-box; /* for IE9+, Firefox 4+, Opera, Chrome */
+}
+
+#component-selection-area.hidden {
+	display: none;
+}

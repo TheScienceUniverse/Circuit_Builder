@@ -125,6 +125,7 @@ var connection_list = [];
 
 var circuit_offset = new Coordinate (0, 0);
 var circuit_movement_activated = false;
+var circuit_selection_activated = false;
 
 const circuit_default_dimension = new Dimension (0, 0);
 var circuit_dimension = new Dimension (0, 0);
@@ -175,12 +176,17 @@ function set_component_search_box_events () {
 }
 
 function set_circuit_listeners () {
-	let circuit = document .getElementById ("circuit");
+	var circuit = document .getElementById ("circuit");
 	var component_tool_list = document .getElementsByClassName ("component-tool");
-	var circuit_moving = false;
-	var initial_position = new Coordinate (0, 0);
+	var selection_area = document .getElementById ("component-selection-area");
 
-	circuit .addEventListener ("contextmenu", (event) => {
+	var circuit_moving = false;
+	var circuit_selecting = false;
+
+	var initial_position = new Coordinate (0, 0);
+	var updated_position = new Coordinate (0, 0);
+
+	window .addEventListener ("contextmenu", (event) => {
 		event .preventDefault ();
 		return false;
 	});
@@ -234,9 +240,10 @@ function set_circuit_listeners () {
 
 			move_component (component .id, new Coordinate (mouse_x - 223 - mouse_dx, mouse_y - 3 - mouse_dy));
 			set_componet_events (component_image, [component .base_X, component .base_Y]);
-			
+
 			selected_component_tool = null;
 			circuit_movement_activated = true;
+			circuit_selection_activated = true;
 		}
 	});
 
@@ -244,48 +251,76 @@ function set_circuit_listeners () {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 
-		if ((event .which == 3 || event .button == 3) && event .target .getAttribute ("id") == "circuit") {
-			circuit_moving = circuit_movement_activated & true;
+		if (event .target .getAttribute ("id") == "circuit") {
 			initial_position .x = mouse_x;
 			initial_position .y = mouse_y;
+			updated_position .x = mouse_x;
+			updated_position .y = mouse_y;
+
+			if ((event .which === 0 || event .button === 0) && !circuit_selecting) {
+				circuit_selecting = circuit_selection_activated;
+
+				//selection_area .style .left = "" + (initial_position .x - 223) + "px";
+				//selection_area .style .top = "" + (initial_position .y - 2) + "px";
+				selection_area .style .width = "0px";
+				selection_area .style .height = "0px";
+
+				selection_area .classList .remove ("hidden");
+			} else if ((event .which === 2 || event .button === 2) && !circuit_moving) {
+				circuit_moving = circuit_movement_activated;
+			}
 		}
 	});
 
 	circuit .addEventListener ("mousemove", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
+console .log (circuit_selecting);
+		let offset = new Coordinate (mouse_x - updated_position .x, mouse_y - updated_position .y);
 
-		if ((event .which == 3 || event .button == 3) && event .target .getAttribute ("id") == "circuit" && circuit_moving) {
-			let offset = new Coordinate (mouse_x - initial_position .x, mouse_y - initial_position .y);
+		if (event .target .getAttribute ("id") == "circuit") {
+			if (circuit_selecting) {
+				selection_area .style .left = "" + ((mouse_x < initial_position .x) ? mouse_x - 223 : initial_position .x - 223) + "px";
+				selection_area .style .top = "" + ((mouse_y < initial_position .y) ? mouse_y - 2 : initial_position .y - 2) + "px";
+				selection_area .style .width = "" + Math .abs (mouse_x - initial_position .x) + "px";
+				selection_area .style .height = "" + Math .abs (mouse_y - initial_position .y) + "px";
+			} else if (circuit_moving) {
+				circuit_dimension .width += offset .x;
+				circuit_dimension .height += offset .y;
 
-			circuit_dimension .width += offset .x;
-			circuit_dimension .height += offset .y;
+				if (circuit_dimension .width < circuit_default_dimension .width) {
+					circuit_dimension .width = circuit_default_dimension .width;
+				}
 
-			if (circuit_dimension .width < circuit_default_dimension .width) {
-				circuit_dimension .width = circuit_default_dimension .width;
+				if (circuit_dimension .height < circuit_default_dimension .height) {
+					circuit_dimension .height = circuit_default_dimension .height;
+				}
+
+				circuit .setAttribute ("width", "" + circuit_dimension .width);
+				circuit .setAttribute ("height", "" + circuit_dimension .height);
+				circuit .setAttribute ("viewBox", "0 0 " + circuit_dimension .width + " " + circuit_dimension .height);
+
+				move_all_components (offset);
 			}
-
-			if (circuit_dimension .height < circuit_default_dimension .height) {
-				circuit_dimension .height = circuit_default_dimension .height;
-			}
-
-			circuit .setAttribute ("width", "" + circuit_dimension .width);
-			circuit .setAttribute ("height", "" + circuit_dimension .height);
-			circuit .setAttribute ("viewBox", "0 0 " + circuit_dimension .width + " " + circuit_dimension .height);
-
-			move_all_components (offset);
-
-			initial_position .x = mouse_x;
-			initial_position .y = mouse_y;
 		}
+
+		updated_position .x = mouse_x;
+		updated_position .y = mouse_y;
 	});
 
 	circuit .addEventListener ("mouseup", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 
-		if ((event .which == 3 || event .button == 3) && event .target .getAttribute ("id") == "circuit" && circuit_moving) {
-			circuit_moving = false;
+		if (event .target .getAttribute ("id") == "circuit") {
+			if (circuit_selecting) {
+				circuit_selecting = false;
+				selection_area .classList .add ("hidden");
+			}
+
+			if (circuit_moving) {
+				circuit_moving = false;
+			}
 		}
 	});
 }
