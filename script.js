@@ -122,6 +122,7 @@ var connection = null;
 var component_list = [];
 var node_list = [];
 var connection_list = [];
+var selected_components = [];
 
 var circuit_offset = new Coordinate (0, 0);
 var circuit_movement_activated = false;
@@ -258,10 +259,10 @@ function set_circuit_listeners () {
 			updated_position .y = mouse_y;
 
 			if ((event .which === 0 || event .button === 0) && !circuit_selecting) {
-				circuit_selecting = circuit_selection_activated;
+				circuit_selecting = true;
 
-				//selection_area .style .left = "" + (initial_position .x - 223) + "px";
-				//selection_area .style .top = "" + (initial_position .y - 2) + "px";
+				selection_area .style .left = "" + (initial_position .x - 223) + "px";
+				selection_area .style .top = "" + (initial_position .y - 2) + "px";
 				selection_area .style .width = "0px";
 				selection_area .style .height = "0px";
 
@@ -269,13 +270,17 @@ function set_circuit_listeners () {
 			} else if ((event .which === 2 || event .button === 2) && !circuit_moving) {
 				circuit_moving = circuit_movement_activated;
 			}
+
+			if ((event .which === 0 || event .button === 0) && circuit_selecting) {
+				unmark_selected_components ();
+			}
 		}
 	});
 
 	circuit .addEventListener ("mousemove", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
-console .log (circuit_selecting);
+
 		let offset = new Coordinate (mouse_x - updated_position .x, mouse_y - updated_position .y);
 
 		if (event .target .getAttribute ("id") == "circuit") {
@@ -314,6 +319,13 @@ console .log (circuit_selecting);
 
 		if (event .target .getAttribute ("id") == "circuit") {
 			if (circuit_selecting) {
+				mark_selected_components ([
+					parseInt (selection_area .style .left)
+					, parseInt (selection_area .style .top)
+					, parseInt (selection_area .style .left) + parseInt (selection_area .style .width)
+					, parseInt (selection_area .style .top) + parseInt (selection_area .style .height)
+				]);
+
 				circuit_selecting = false;
 				selection_area .classList .add ("hidden");
 			}
@@ -684,6 +696,39 @@ function get_fitting_dimension () {
 	fitting_dimension .height = max_y - min_y + 100;
 
 	return fitting_dimension;
+}
+
+function mark_selected_components (box_area) {
+	console .log (box_area);
+	console .log (component_list);
+	for (let i = 0; i < component_list .length; i++) {
+		if (
+			component_list [i] .base_point .x > box_area [0]
+			&& component_list [i] .base_point .y > box_area [1]
+			&& component_list [i] .base_point .x + component_list [i] .dimension .width < box_area [2]
+			&& component_list [i] .base_point .y + component_list [i] .dimension .height < box_area [3]
+		) {
+			selected_components .push (component_list [i] .id);
+			let component_image = document .getElementById (component_list [i] .id);
+
+			for (let j = 0; j < component_image .children .length; j++) {
+				console .log (component_image);
+				component_image .children [j] .setAttribute ("stroke-dasharray", "5,1");
+			}
+		}
+	}
+}
+
+function unmark_selected_components () {
+	while (selected_components .length > 0) {
+		let component_id = selected_components .shift ();
+		let component_image = document .getElementById (component_id);
+
+		for (let j = 0; j < component_image .children .length; j++) {
+			console .log (component_image);
+			component_image .children [j] .removeAttribute ("stroke-dasharray");
+		}
+	}
 }
 
 
