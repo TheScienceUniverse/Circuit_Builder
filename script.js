@@ -340,13 +340,13 @@ function set_circuit_listeners () {
 function set_overlay_events () {
 	let view_coordinates_overlay = document .getElementById ("circuit-overlay") .children [1];
 
-	document .addEventListener ("mousemove", (event) => {
+	window .addEventListener ("mousemove", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 		view_coordinates_overlay .innerHTML = mouse_x + ", " + mouse_y;
 	});
-	
-	document .addEventListener ("drag", (event) => {
+
+	window .addEventListener ("drag", (event) => {
 		mouse_x = event .clientX;
 		mouse_y = event .clientY;
 		view_coordinates_overlay .innerHTML = mouse_x + ", " + mouse_y;
@@ -426,7 +426,8 @@ function set_component_values (component = new Component (), component_image) {
 
 			node_list .push (node);
 			component .nodes .push (new Component_Node (i, node .id));
-			component_image .children [i] .setAttribute ("id", node .id);
+			sub_diagram .setAttribute ("id", node .id);
+			sub_diagram .setAttribute ("fill", node_colour_hex_palatte [node .type]);
 		}
 	}
 }
@@ -438,6 +439,7 @@ function set_componet_events (component_image, initial_position = new Coordinate
 	let old_position = initial_position;
 	var connection_line = null;
 	var connection_lines = document .getElementById ("connections");
+	var node_1_type;
 
 	component_image .addEventListener ("mousedown", (event) => {
 		mouse_x = event .clientX;
@@ -451,6 +453,7 @@ function set_componet_events (component_image, initial_position = new Coordinate
 			connection = new Connection ();
 			connection .component_1_id = component_image .getAttribute ("id");
 			connection .node_1_id = event .target .getAttribute ("id");
+			node_1_type = event .target .classList [1];
 
 			connection_line = document .createElementNS ("http://www.w3.org/2000/svg", "line");
 			connection_line .setAttribute ("class", "connection");
@@ -490,7 +493,10 @@ function set_componet_events (component_image, initial_position = new Coordinate
 		mouse_y = event .clientY;
 
 		if (connecting) {
-			if (event .target .classList .contains ("node")) {
+			if (
+				event .target .classList .contains ("node")
+				&& are_nodes_connectable (node_1_type, event .target .classList [1])
+			) {
 				node = get_node_by_id (event .target .getAttribute ("id"));
 				connection .node_2_id = node .id;
 				connection .component_2_id = node .base_component_id;
@@ -699,8 +705,6 @@ function get_fitting_dimension () {
 }
 
 function mark_selected_components (box_area) {
-	console .log (box_area);
-	console .log (component_list);
 	for (let i = 0; i < component_list .length; i++) {
 		if (
 			component_list [i] .base_point .x > box_area [0]
@@ -712,7 +716,6 @@ function mark_selected_components (box_area) {
 			let component_image = document .getElementById (component_list [i] .id);
 
 			for (let j = 0; j < component_image .children .length; j++) {
-				console .log (component_image);
 				component_image .children [j] .setAttribute ("stroke-dasharray", "5,1");
 			}
 		}
@@ -725,16 +728,36 @@ function unmark_selected_components () {
 		let component_image = document .getElementById (component_id);
 
 		for (let j = 0; j < component_image .children .length; j++) {
-			console .log (component_image);
 			component_image .children [j] .removeAttribute ("stroke-dasharray");
 		}
 	}
+}
+
+function are_nodes_connectable (node_1_type = "", node_2_type = "") {
+	var answer = true;
+
+	if (
+		(node_1_type != "both"  && node_2_type != "both") 
+		&& node_1_type == node_2_type
+	) {
+		answer = false;
+	}
+
+	return answer;
 }
 
 
 /*------------------------------ Data Constants ------------------------------*/
 
 const colour_hex_palatte = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+
+const node_colour_hex_palatte = {
+	"input" : "#00FF00"
+	, "output" : "#FFA500"
+	, "both" : "#00FFFF"
+	, "positive" : "#FF0000"
+	, "negative" : "#0000F0"
+};
 
 const component_svg_data = [
 	{
