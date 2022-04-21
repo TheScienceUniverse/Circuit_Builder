@@ -427,7 +427,6 @@ function set_component_values (component = new Component (), component_image) {
 			node_list .push (node);
 			component .nodes .push (new Component_Node (i, node .id));
 			sub_diagram .setAttribute ("id", node .id);
-			sub_diagram .setAttribute ("fill", node_colour_hex_palatte [node .type]);
 		}
 	}
 }
@@ -465,6 +464,7 @@ function set_componet_events (component_image, initial_position = new Coordinate
 			connection_line .setAttribute ("y2", event .target .getAttribute ("cy"));
 
 			connection_lines .appendChild (connection_line);
+			mark_possible_destination_nodes (connection .node_1_id, node_1_type);
 		} else {
 			connecting = false;
 			dragging = true;
@@ -509,6 +509,8 @@ function set_componet_events (component_image, initial_position = new Coordinate
 			} else {
 				connection_lines .removeChild (connection_lines .lastChild);
 			}
+
+			unmark_all_nodes ();
 		}
 
 		if (dragging) {
@@ -744,6 +746,20 @@ function are_nodes_connectable (node_1_type = "", node_2_type = "") {
 	}
 
 	return answer;
+}
+
+function mark_possible_destination_nodes (node_id, node_type) {
+	for (let i = 0; i < node_list .length; i++) {
+		if (node_list [i] .id != node_id && are_nodes_connectable (node_type, node_list [i] .type)) {
+			document .getElementById (node_list [i] .id) .setAttribute ("fill", "red");
+		}
+	}
+}
+
+function  unmark_all_nodes () {
+	for (let i = 0; i < node_list .length; i++) {
+		document .getElementById (node_list [i] .id) .setAttribute ("fill", "white");
+	}
 }
 
 
